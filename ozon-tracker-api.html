@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ozon Price Tracker</title>
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f4f4f5;
+            
+            --color-primary: #005bff;
+            --color-success: #22c55e;
+            --color-danger: #ef4444;
+            --color-warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--color-primary) 0%, #0047cc 100%);
+            border-radius: 16px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .api-status {
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .api-status.online {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--color-success);
+        }
+
+        .api-status.offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-danger);
+        }
+
+        .card {
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0047cc;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .monitor-item {
+            background: var(--tg-theme-bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .monitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .monitor-title {
+            font-weight: 600;
+            font-size: 14px;
+            flex: 1;
+            margin-right: 8px;
+            line-height: 1.4;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--color-success);
+        }
+
+        .status-reached {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--color-success);
+        }
+
+        .price-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .price-label {
+            color: var(--tg-theme-hint-color);
+        }
+
+        .price-value {
+            font-weight: 600;
+        }
+
+        .price-current {
+            color: var(--color-primary);
+        }
+
+        .price-target {
+            color: var(--color-success);
+        }
+
+        .price-diff {
+            color: var(--color-danger);
+        }
+
+        .price-diff.positive {
+            color: var(--color-success);
+        }
+
+        .monitor-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            color: var(--tg-theme-hint-color);
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--color-success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-danger);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--color-primary);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .link-preview {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+            margin-top: 4px;
+            word-break: break-all;
+        }
+
+        /* 🆕 СТИЛИ ДЛЯ КНОПОК ДЕЙСТВИЙ */
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #ddd;
+        }
+
+        .btn-icon {
+            flex: 1;
+            padding: 8px;
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(0, 91, 255, 0.1);
+            border-color: var(--color-primary);
+        }
+
+        .btn-icon:active {
+            transform: scale(0.95);
+        }
+
+        .btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Ozon Price Tracker</h1>
+            <p>Отслеживай реальные цены на товары Ozon</p>
+        </div>
+
+        <!-- Статус API -->
+        <div id="api-status" class="api-status offline">
+            🔴 Проверка подключения к API...
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Форма добавления мониторинга -->
+        <div class="card">
+            <h2 style="font-size: 18px; margin-bottom: 16px;">➕ Добавить мониторинг</h2>
+            
+            <form id="add-monitor-form">
+                <div class="form-group">
+                    <label class="form-label" for="product-url">Ссылка на товар Ozon</label>
+                    <input 
+                        type="url" 
+                        id="product-url" 
+                        class="form-input"
+                        placeholder="https://www.ozon.ru/product/..."
+                        required
+                    >
+                    <div class="link-preview" id="link-preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="target-price">Целевая цена (₽)</label>
+                    <input 
+                        type="number" 
+                        id="target-price" 
+                        class="form-input"
+                        placeholder="5000"
+                        min="1"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="add-btn">
+                    <span>Начать отслеживание</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Список мониторингов -->
+        <div class="card">
+            <h2 style="font-size: 18px; margin-bottom: 16px;">📊 Активные мониторинги</h2>
+            <div id="monitors-list">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p class="empty-state-text">Нет активных мониторингов.<br>Добавьте первый товар!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // ============================================
+        // КОНФИГУРАЦИЯ API
+        // ============================================
+        
+        // 🔧 ЗАМЕНИ НА СВОЙ URL ПОСЛЕ ДЕПЛОЯ!
+        const API_BASE_URL = 'https://your-railway-app.railway.app';  // Твой Railway URL
+        
+        // Для локальной разработки используй:
+        // const API_BASE_URL = 'http://localhost:5000';
+        
+        // ============================================
+
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // Применяем тему Telegram
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f4f4f5');
+
+        // Хранилище данных
+        let monitors = JSON.parse(localStorage.getItem('ozon-monitors') || '[]');
+
+        // Элементы DOM
+        const form = document.getElementById('add-monitor-form');
+        const urlInput = document.getElementById('product-url');
+        const priceInput = document.getElementById('target-price');
+        const monitorsList = document.getElementById('monitors-list');
+        const addBtn = document.getElementById('add-btn');
+        const alertContainer = document.getElementById('alert-container');
+        const linkPreview = document.getElementById('link-preview');
+        const apiStatus = document.getElementById('api-status');
+
+        // Проверка API при загрузке
+        checkAPIStatus();
+
+        // Показ алертов
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span>${message}</span>
+            `;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Проверка статуса API
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    apiStatus.className = 'api-status online';
+                    apiStatus.innerHTML = '🟢 Подключено к API';
+                } else {
+                    throw new Error('API недоступен');
+                }
+            } catch (error) {
+                apiStatus.className = 'api-status offline';
+                apiStatus.innerHTML = '🔴 API недоступен (работает офлайн)';
+                console.error('API Status Error:', error);
+            }
+        }
+
+        // Превью ссылки
+        urlInput.addEventListener('input', (e) => {
+            const url = e.target.value;
+            if (url.includes('ozon.ru')) {
+                const productId = url.match(/product\/[^\\/]+-(\\d+)/)?.[1];
+                if (productId) {
+                    linkPreview.textContent = `ID товара: ${productId}`;
+                } else {
+                    linkPreview.textContent = 'Проверьте корректность ссылки';
+                }
+            } else {
+                linkPreview.textContent = '';
+            }
+        });
+
+        // Получение цены через API
+        async function fetchPrice(url) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/price`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.price;
+                } else {
+                    throw new Error(data.error || 'Не удалось получить цену');
+                }
+            } catch (error) {
+                console.error('Fetch Price Error:', error);
+                // Fallback: генерируем случайную цену если API недоступен
+                showAlert('API недоступен, используется демо-режим', 'info');
+                return Math.floor(Math.random() * 10000) + 3000;
+            }
+        }
+
+        // Добавление мониторинга
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = urlInput.value.trim();
+            const targetPrice = parseInt(priceInput.value);
+
+            if (!url.includes('ozon.ru')) {
+                showAlert('Пожалуйста, введите ссылку на товар Ozon', 'error');
+                return;
+            }
+
+            addBtn.disabled = true;
+            addBtn.innerHTML = '<span class="loading"></span><span>Получение цены...</span>';
+
+            try {
+                const currentPrice = await fetchPrice(url);
+                
+                const monitor = {
+                    id: Date.now(),
+                    url,
+                    targetPrice,
+                    currentPrice,
+                    addedAt: new Date().toISOString(),
+                    lastChecked: new Date().toISOString()
+                };
+
+                monitors.push(monitor);
+                localStorage.setItem('ozon-monitors', JSON.stringify(monitors));
+
+                showAlert('Мониторинг успешно добавлен!', 'success');
+                renderMonitors();
+                form.reset();
+                linkPreview.textContent = '';
+
+                // Вибрация при успехе
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            } catch (error) {
+                showAlert('Ошибка при добавлении мониторинга: ' + error.message, 'error');
+            } finally {
+                addBtn.disabled = false;
+                addBtn.innerHTML = '<span>Начать отслеживание</span>';
+            }
+        });
+
+        // 🆕 РУЧНОЕ ОБНОВЛЕНИЕ ЦЕНЫ
+        async function refreshPrice(monitorId) {
+            const monitor = monitors.find(m => m.id === monitorId);
+            if (!monitor) return;
+
+            const btn = event.target.closest('.btn-icon');
+            btn.disabled = true;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳';
+
+            try {
+                const newPrice = await fetchPrice(monitor.url);
+                monitor.currentPrice = newPrice;
+                monitor.lastChecked = new Date().toISOString();
+
+                localStorage.setItem('ozon-monitors', JSON.stringify(monitors));
+                
+                if (newPrice <= monitor.targetPrice) {
+                    showAlert(`🎉 Цена достигла цели! Теперь ${newPrice} ₽`, 'success');
+                    if (tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+                } else {
+                    showAlert('✅ Цена обновлена', 'success');
+                }
+
+                renderMonitors();
+            } catch (error) {
+                showAlert('❌ Ошибка при обновлении цены', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // Удаление мониторинга
+        function removeMonitor(monitorId) {
+            monitors = monitors.filter(m => m.id !== monitorId);
+            localStorage.setItem('ozon-monitors', JSON.stringify(monitors));
+            showAlert('Мониторинг удалён', 'info');
+            renderMonitors();
+            
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        // Открытие товара
+        function openProduct(url) {
+            tg.openLink(url);
+        }
+
+        // Отрисовка списка мониторингов
+        function renderMonitors() {
+            if (monitors.length === 0) {
+                monitorsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p class="empty-state-text">Нет активных мониторингов.<br>Добавьте первый товар!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            monitorsList.innerHTML = monitors.map(monitor => {
+                const diff = monitor.currentPrice - monitor.targetPrice;
+                const isReached = monitor.currentPrice <= monitor.targetPrice;
+                const diffPercent = ((diff / monitor.targetPrice) * 100).toFixed(1);
+
+                return `
+                    <div class="monitor-item">
+                        <div class="monitor-header">
+                            <div class="monitor-title">${extractProductName(monitor.url)}</div>
+                            <span class="status-badge ${isReached ? 'status-reached' : 'status-active'}">
+                                ${isReached ? '✓ Достигнута' : 'Отслеживается'}
+                            </span>
+                        </div>
+
+                        <div class="price-info">
+                            <span class="price-label">Текущая цена:</span>
+                            <span class="price-value price-current">${monitor.currentPrice} ₽</span>
+                        </div>
+
+                        <div class="price-info">
+                            <span class="price-label">Целевая цена:</span>
+                            <span class="price-value price-target">${monitor.targetPrice} ₽</span>
+                        </div>
+
+                        <div class="price-info">
+                            <span class="price-label">Разница:</span>
+                            <span class="price-value price-diff ${diff < 0 ? 'positive' : ''}">
+                                ${diff > 0 ? '+' : ''}${diff} ₽ (${diff > 0 ? '+' : ''}${diffPercent}%)
+                            </span>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn-icon" onclick="refreshPrice(${monitor.id})" title="Обновить цену">🔄</button>
+                            <button class="btn-icon" onclick="openProduct('${monitor.url}')" title="Открыть товар">🔗</button>
+                            <button class="btn-icon" onclick="removeMonitor(${monitor.id})" title="Удалить">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Извлечение названия товара из URL
+        function extractProductName(url) {
+            const match = url.match(/product\/([^\\/]+)-(\\d+)/);
+            if (match && match[1]) {
+                return decodeURIComponent(match[1].replace(/-/g, ' '))
+                    .split(' ')
+                    .slice(0, 5)
+                    .join(' ');
+            }
+            return 'Товар на Ozon';
+        }
+
+        // Начальная отрисовка
+        renderMonitors();
+
+        // Автообновление каждые 5 минут
+        setInterval(() => {
+            monitors.forEach(monitor => {
+                const lastChecked = new Date(monitor.lastChecked);
+                const now = new Date();
+                const diff = (now - lastChecked) / 1000 / 60; // минуты
+
+                if (diff >= 5) {
+                    checkPrice(monitor.id);
+                }
+            });
+        }, 300000); // 5 минут
+
+        // Проверка API каждые 30 секунд
+        setInterval(checkAPIStatus, 30000);
+    </script>
+</body>
+</html>
