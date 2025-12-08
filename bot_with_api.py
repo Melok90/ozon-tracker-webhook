@@ -305,11 +305,8 @@ async def run_telegram_bot():
     app_tg.add_handler(CommandHandler("stop", stop_command))
     app_tg.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Настраиваем периодическую проверку цен (каждые 2 часа)
-    job_queue = app_tg.job_queue
-    job_queue.run_repeating(check_prices_job, interval=7200, first=10)
-    
-    print("🤖 Telegram бот запущен! Проверка цен каждые 2 часа.")
+   # Telegram-бот без фонового JobQueue (Railway)
+print("🤖 Telegram бот запущен! (JobQueue отключён на сервере)")
     
     # Запускаем бота
     await app_tg.initialize()
